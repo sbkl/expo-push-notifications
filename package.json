@@ -1,0 +1,76 @@
+{
+  "name": "expo-push-notifications",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc --project ./esm.json && echo '{\\n  \"type\": \"module\"\\n}' > dist/esm/package.json",
+    "build:cjs": "tsc --project ./commonjs.json && echo '{\\n  \"type\": \"commonjs\"\\n}' > dist/commonjs/package.json",
+    "dev": "cd example; npm run dev",
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "files": [
+    "dist",
+    "src",
+    "frontend"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "@convex-dev/component-source": "./src/client/index.ts",
+        "types": "./dist/esm/client/index.d.ts",
+        "default": "./dist/esm/client/index.js"
+      },
+      "require": {
+        "@convex-dev/component-source": "./src/client/index.ts",
+        "types": "./dist/commonjs/client/index.d.ts",
+        "default": "./dist/commonjs/client/index.js"
+      }
+    },
+    "./frontend": {
+      "import": {
+        "@convex-dev/component-source": "./src/frontend/index.ts",
+        "types": "./dist/esm/frontend.d.ts",
+        "default": "./dist/esm/frontend.js"
+      },
+      "require": {
+        "@convex-dev/component-source": "./src/frontend/index.ts",
+        "types": "./dist/commonjs/frontend.d.ts",
+        "default": "./dist/commonjs/frontend.js"
+      }
+    },
+    "./convex.config.js": {
+      "import": {
+        "@convex-dev/component-source": "./src/component/convex.config.ts",
+        "types": "./dist/esm/component/convex.config.d.ts",
+        "default": "./dist/esm/component/convex.config.js"
+      }
+    }
+  },
+  "dependencies": {
+    "@types/react": "~18.2.79",
+    "convex": "1.16.0-alpha.2",
+    "convex-helpers": "^0.1.58",
+    "expo": "^51.0.32",
+    "expo-constants": "^16.0.2",
+    "expo-device": "^6.0.2",
+    "expo-notifications": "^0.28.16",
+    "expo-router": "^3.5.23",
+    "react-native": "^0.75.3",
+    "tamagui": "^1.110.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.1",
+    "@types/node": "^18.17.0",
+    "eslint": "^9.9.1",
+    "globals": "^15.9.0",
+    "prettier": "3.2.5",
+    "typescript": "~5.0.3",
+    "typescript-eslint": "^8.4.0"
+  },
+  "main": "./dist/commonjs/client/index.js",
+  "types": "./dist/commonjs/client/index.d.ts",
+  "module": "./dist/esm/client/index.js"
+}

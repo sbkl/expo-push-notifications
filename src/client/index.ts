@@ -1,0 +1,195 @@
+import {
+  Expand,
+  FunctionReference,
+  GenericDataModel,
+  GenericMutationCtx,
+  GenericQueryCtx,
+} from "convex/server";
+import { GenericId } from "convex/values";
+
+/**
+ * This component uses Expo's push notification API
+ * (https://docs.expo.dev/push-notifications/overview/)
+ * to allow users to send each other push notifications.
+ *
+ * This component takes in a type parameter `UserType` that should
+ * correspond to the unique identifier you want to use when sending
+ * notifications in your app (e.g. `Id<"users">` or a branded string
+ * `type Email = string & { __isEmail: true }`).
+ */
+export class PushNotificationsClient<UserType extends string = string> {
+  private config: {
+    logLevel: LogLevel;
+  };
+  constructor(
+    public component: UseApi<typeof api>,
+    config: {
+      logLevel?: LogLevel;
+    }
+  ) {
+    this.component = component;
+    this.config = {
+      ...config,
+      logLevel: config.logLevel ?? "ERROR",
+    };
+  }
+
+  /**
+   * Takes in an Expo Push Token fetched from the client (https://docs.expo.dev/versions/latest/sdk/notifications/#expopushtoken).
+   *
+   * This allows sending notifications for this user using this token.
+   * @param ctx
+   * @param args
+   * @returns null
+   */
+  recordToken(
+    ctx: RunMutationCtx,
+    args: { userId: UserType; pushToken: string }
+  ): Promise<null> {
+    return ctx.runMutation(this.component.public.recordPushNotificationToken, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
+   * This removes the push notification token for a user if it exists.
+   *
+   * Once this is run, notifications can no longer be sent to this user.
+   * @param ctx
+   * @param args
+   * @returns null
+   */
+  removeToken(ctx: RunMutationCtx, args: { userId: UserType }): Promise<null> {
+    return ctx.runMutation(this.component.public.removePushNotificationToken, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
+   * Sends a push notification to the user with the given token.
+   *
+   * If allowUnregisteredTokens is true, we will log when there is no token for
+   * a user and not attempt to send a notification.
+   *
+   * If allowUnregisteredTokens is false, we will throw a ConvexError if there is no
+   * token for a user.
+   *
+   * Notification delivery will be batched for efficient delivery.
+   * @param ctx
+   * @param args
+   * @returns null
+   */
+  sendPushNotification(
+    ctx: RunMutationCtx,
+    args: {
+      userId: UserType;
+      notification: NotificationFields;
+      allowUnregisteredTokens?: boolean;
+    }
+  ) {
+    return ctx.runMutation(this.component.public.sendPushNotification, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
+   * Temporarily pause notifications for a user, for instance when the user is
+   * actively using the app, or able to see notifications elsewhere.
+   *
+   * Notifications sent while paused will be dropped and will not be retried.
+   * @param ctx
+   * @param args
+   * @returns
+   */
+  pauseNotificationsForUser(ctx: RunMutationCtx, args: { userId: UserType }) {
+    return ctx.runMutation(this.component.public.pauseNotificationsForUser, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
+   * Resume notifications for a user.
+   * @param ctx
+   * @param args
+   * @returns
+   */
+  unpauseNotificationsForUser(ctx: RunMutationCtx, args: { userId: UserType }) {
+    return ctx.runMutation(this.component.public.unpauseNotificationsForUser, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
+   * Gracefully shut down the push notification sender.
+   *
+   * If notifications aren't being sent for some reason, this will attempt to gracefully
+   * cancel any running jobs. To restart the push notification sender, call restart().
+   *
+   * @param ctx
+   * @returns
+   */
+  shutdown(ctx: RunMutationCtx) {
+    return ctx.runMutation(this.component.public.restart, {
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
+   * Restart the push notification sender.
+   *
+   * Call `shutdown()` first to gracefully drain any jobs in progress.
+   * @param ctx
+   * @returns {boolean} true if the restart was successful, false if it was not (i.e. if there are still jobs in progress)
+   */
+  restart(ctx: RunMutationCtx): Promise<boolean> {
+    return ctx.runMutation(this.component.public.restart, {
+      logLevel: this.config.logLevel,
+    });
+  }
+}
+
+/* Type utils follow */
+
+type RunQueryCtx = {
+  runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
+};
+type RunMutationCtx = {
+  runMutation: GenericMutationCtx<GenericDataModel>["runMutation"];
+};
+
+// TODO: Copy in a concrete API from example/_generated/server.d.ts once your API is stable.
+import { api } from "../component/_generated/api.js"; // the component's public api
+import { NotificationFields } from "../component/schema.js";
+import { LogLevel } from "../logging/index.js";
+
+export type OpaqueIds<T> =
+  T extends GenericId<infer _T>
+    ? string
+    : T extends (infer U)[]
+      ? OpaqueIds<U>[]
+      : T extends object
+        ? { [K in keyof T]: OpaqueIds<T[K]> }
+        : T;
+
+export type UseApi<API> = Expand<{
+  [mod in keyof API]: API[mod] extends FunctionReference<
+    infer FType,
+    "public",
+    infer FArgs,
+    infer FReturnType,
+    infer FComponentPath
+  >
+    ? FunctionReference<
+        FType,
+        "internal",
+        OpaqueIds<FArgs>,
+        OpaqueIds<FReturnType>,
+        FComponentPath
+      >
+    : UseApi<API[mod]>;
+}>;
