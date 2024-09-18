@@ -36,6 +36,61 @@ declare const fullApi: ApiFromModules<{
 }>;
 export type Mounts = {
   public: {
+    deleteNotificationsForUser: FunctionReference<
+      "mutation",
+      "public",
+      { logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR"; userId: string },
+      any
+    >;
+    getNotification: FunctionReference<
+      "query",
+      "public",
+      { id: string; logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR" },
+      null | {
+        body?: string;
+        data?: any;
+        numPreviousFailures: number;
+        sound?: string;
+        state:
+          | "awaiting_delivery"
+          | "in_progress"
+          | "delivered"
+          | "needs_retry"
+          | "maybe_delivered"
+          | "failed";
+        title: string;
+      }
+    >;
+    getNotificationsForUser: FunctionReference<
+      "query",
+      "public",
+      {
+        limit?: number;
+        logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR";
+        userId: string;
+      },
+      Array<{
+        body?: string;
+        data?: any;
+        id: string;
+        numPreviousFailures: number;
+        sound?: string;
+        state:
+          | "awaiting_delivery"
+          | "in_progress"
+          | "delivered"
+          | "needs_retry"
+          | "maybe_delivered"
+          | "failed";
+        title: string;
+      }>
+    >;
+    getStatusForUser: FunctionReference<
+      "query",
+      "public",
+      { logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR"; userId: string },
+      { hasToken: boolean; paused: boolean }
+    >;
     pauseNotificationsForUser: FunctionReference<
       "mutation",
       "public",
@@ -68,6 +123,7 @@ export type Mounts = {
       "mutation",
       "public",
       {
+        allowUnregisteredTokens?: boolean;
         logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR";
         notification: {
           body?: string;
@@ -77,7 +133,7 @@ export type Mounts = {
         };
         userId: string;
       },
-      null
+      string | null
     >;
     shutdown: FunctionReference<
       "mutation",

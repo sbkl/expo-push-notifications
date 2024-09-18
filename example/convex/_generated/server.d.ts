@@ -153,6 +153,61 @@ export type DatabaseWriter = GenericDatabaseWriter<DataModel>;
 export declare const components: {
   pushNotifications: {
     public: {
+      deleteNotificationsForUser: FunctionReference<
+        "mutation",
+        "internal",
+        { logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR"; userId: string },
+        any
+      >;
+      getNotification: FunctionReference<
+        "query",
+        "internal",
+        { id: string; logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR" },
+        null | {
+          body?: string;
+          data?: any;
+          numPreviousFailures: number;
+          sound?: string;
+          state:
+            | "awaiting_delivery"
+            | "in_progress"
+            | "delivered"
+            | "needs_retry"
+            | "maybe_delivered"
+            | "failed";
+          title: string;
+        }
+      >;
+      getNotificationsForUser: FunctionReference<
+        "query",
+        "internal",
+        {
+          limit?: number;
+          logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR";
+          userId: string;
+        },
+        Array<{
+          body?: string;
+          data?: any;
+          id: string;
+          numPreviousFailures: number;
+          sound?: string;
+          state:
+            | "awaiting_delivery"
+            | "in_progress"
+            | "delivered"
+            | "needs_retry"
+            | "maybe_delivered"
+            | "failed";
+          title: string;
+        }>
+      >;
+      getStatusForUser: FunctionReference<
+        "query",
+        "internal",
+        { logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR"; userId: string },
+        { hasToken: boolean; paused: boolean }
+      >;
       pauseNotificationsForUser: FunctionReference<
         "mutation",
         "internal",
@@ -185,6 +240,7 @@ export declare const components: {
         "mutation",
         "internal",
         {
+          allowUnregisteredTokens?: boolean;
           logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR";
           notification: {
             body?: string;
@@ -194,7 +250,7 @@ export declare const components: {
           };
           userId: string;
         },
-        null
+        string | null
       >;
       shutdown: FunctionReference<
         "mutation",
