@@ -90,12 +90,35 @@ export class PushNotificationsClient<UserType extends string = string> {
   }
 
   /**
-   * Gets the status of a notification by ID returned from {@link sendPushNotification}.
+   * Gets the notification by ID returned from {@link sendPushNotification}.
    * Returns null if there is no record of a notification with that ID.
    */
-  getStatus(ctx: RunQueryCtx, id: string) {
-    return ctx.runQuery(this.component.public.getStatus, {
-      id,
+  getNotification(ctx: RunQueryCtx, args: { id: string }) {
+    return ctx.runQuery(this.component.public.getNotification, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
+   * Gets all notifications for a user.
+   */
+  getNotificationsForUser(
+    ctx: RunQueryCtx,
+    args: { userId: UserType; limit?: number }
+  ) {
+    return ctx.runQuery(this.component.public.getNotificationsForUser, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
+   * Deletes all notifications for a user.
+   */
+  deleteNotificationsForUser(ctx: RunMutationCtx, args: { userId: UserType }) {
+    return ctx.runMutation(this.component.public.deleteNotificationsForUser, {
+      ...args,
       logLevel: this.config.logLevel,
     });
   }
