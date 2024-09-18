@@ -134,7 +134,7 @@ export class PushNotificationsClient<UserType extends string = string> {
    * @returns
    */
   shutdown(ctx: RunMutationCtx) {
-    return ctx.runMutation(this.component.public.restart, {
+    return ctx.runMutation(this.component.public.shutdown, {
       logLevel: this.config.logLevel,
     });
   }
