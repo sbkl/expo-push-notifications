@@ -38,9 +38,6 @@ export class PushNotificationsClient<UserType extends string = string> {
    * Takes in an Expo Push Token fetched from the client (https://docs.expo.dev/versions/latest/sdk/notifications/#expopushtoken).
    *
    * This allows sending notifications for this user using this token.
-   * @param ctx
-   * @param args
-   * @returns null
    */
   recordToken(
     ctx: RunMutationCtx,
@@ -56,9 +53,6 @@ export class PushNotificationsClient<UserType extends string = string> {
    * This removes the push notification token for a user if it exists.
    *
    * Once this is run, notifications can no longer be sent to this user.
-   * @param ctx
-   * @param args
-   * @returns null
    */
   removeToken(ctx: RunMutationCtx, args: { userId: UserType }): Promise<null> {
     return ctx.runMutation(this.component.public.removePushNotificationToken, {
@@ -77,9 +71,9 @@ export class PushNotificationsClient<UserType extends string = string> {
    * token for a user.
    *
    * Notification delivery will be batched for efficient delivery.
-   * @param ctx
-   * @param args
-   * @returns null
+   * @returns The ID of the notification, to be used to query the status.
+   * Or null if the user has paused notifications.
+   * @throws ConvexError if the user has no token and allowUnregisteredTokens is false.
    */
   sendPushNotification(
     ctx: RunMutationCtx,
@@ -96,13 +90,21 @@ export class PushNotificationsClient<UserType extends string = string> {
   }
 
   /**
+   * Gets the status of a notification by ID returned from {@link sendPushNotification}.
+   * Returns null if there is no record of a notification with that ID.
+   */
+  getStatus(ctx: RunQueryCtx, id: string) {
+    return ctx.runQuery(this.component.public.getStatus, {
+      id,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
    * Temporarily pause notifications for a user, for instance when the user is
    * actively using the app, or able to see notifications elsewhere.
    *
    * Notifications sent while paused will be dropped and will not be retried.
-   * @param ctx
-   * @param args
-   * @returns
    */
   pauseNotificationsForUser(ctx: RunMutationCtx, args: { userId: UserType }) {
     return ctx.runMutation(this.component.public.pauseNotificationsForUser, {

@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { mutation } from "./functions.js";
+import { mutation, query } from "./functions.js";
 import { notificationFields } from "./schema.js";
 import { ensureCoordinator, shutdownGracefully } from "./helpers.js";
 import { Doc } from "./_generated/dataModel.js";
@@ -52,8 +52,9 @@ export const sendPushNotification = mutation({
   args: {
     userId: v.string(),
     notification: v.object(notificationFields),
+    allowUnregisteredTokens: v.optional(v.boolean()),
   },
-  returns: v.null(),
+  returns: v.union(v.id("notifications"), v.null()),
   handler: async (ctx, args) => {
     const token = await ctx.db
       .query("pushTokens")
@@ -63,6 +64,9 @@ export const sendPushNotification = mutation({
       ctx.logger.error(
         `No push token found for user ${args.userId}, cannot send notification`
       );
+      if (args.allowUnregisteredTokens) {
+        return null;
+      }
       throw new ConvexError({
         code: "NoPushToken",
         message: "No push token found for user",
@@ -74,9 +78,9 @@ export const sendPushNotification = mutation({
       ctx.logger.info(
         `Notifications are paused for user ${args.userId}, skipping`
       );
-      return;
+      return null;
     }
-    await ctx.db.insert("notifications", {
+    const id = await ctx.db.insert("notifications", {
       token: token.token,
       metadata: args.notification,
       state: "awaiting_delivery",
@@ -84,6 +88,19 @@ export const sendPushNotification = mutation({
     });
     ctx.logger.debug(`Recording notification for user ${args.userId}`);
     await ensureCoordinator(ctx);
+    return id;
+  },
+});
+
+export const getStatus = query({
+  args: { id: v.id("notifications") },
+  handler: async (ctx, args) => {
+    const notification = await ctx.db.get(args.id);
+    if (!notification) {
+      return null;
+    }
+    const { numPreviousFailures, state } = notification;
+    return { numPreviousFailures, state };
   },
 });
 
