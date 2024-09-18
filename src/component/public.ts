@@ -222,6 +222,27 @@ export const unpauseNotificationsForUser = mutation({
   },
 });
 
+export const getStatusForUser = query({
+  args: { userId: v.id("users") },
+  returns: v.object({ hasToken: v.boolean(), paused: v.boolean() }),
+  handler: async (ctx, { userId }) => {
+    const existingToken = await ctx.db
+      .query("pushTokens")
+      .withIndex("userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (existingToken === null) {
+      ctx.logger.debug(
+        `No push token found for user ${userId}, returning false`
+      );
+      return { hasToken: false, paused: false };
+    }
+    return {
+      hasToken: true,
+      paused: existingToken.notificationsPaused ?? false,
+    };
+  },
+});
+
 export const shutdown = mutation({
   args: {},
   returns: v.object({

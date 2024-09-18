@@ -62,6 +62,16 @@ export class PushNotificationsClient<UserType extends string = string> {
   }
 
   /**
+   * Gets the status of a user: whether they have a token and whether notifications are paused.
+   */
+  getStatusForUser(ctx: RunQueryCtx, args: { userId: UserType }) {
+    return ctx.runQuery(this.component.public.getStatusForUser, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
    * Sends a push notification to the user with the given token.
    *
    * If allowUnregisteredTokens is true, we will log when there is no token for
