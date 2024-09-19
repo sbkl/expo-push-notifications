@@ -76,6 +76,11 @@ export function Demo() {
   const dims = Dimensions.get("screen");
   const [name, setName] = useState("");
   const convex = useConvex();
+  const [notifId, setNotifId] = useState<string | null>(null);
+  const notificationState = useQuery(
+    api.example.getNotificationStatus,
+    notifId ? { id: notifId } : "skip"
+  );
   const allNames = useQuery(api.example.getNames) ?? [];
 
   return (
@@ -132,10 +137,12 @@ export function Demo() {
               <Button
                 key={idx}
                 onPress={() => {
-                  convex.mutation(api.example.sendPushNotification, {
-                    to: n,
-                    title: `${emoji} from ${name}`,
-                  });
+                  convex
+                    .mutation(api.example.sendPushNotification, {
+                      to: n,
+                      title: `${emoji} from ${name}`,
+                    })
+                    .then(setNotifId);
                 }}
               >
                 <Text>{emoji}</Text>
@@ -143,6 +150,9 @@ export function Demo() {
             ))}
           </View>
         ))}
+        {notificationState && (
+          <Text>Notification status: {notificationState}</Text>
+        )}
       </View>
     </View>
   );

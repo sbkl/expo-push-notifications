@@ -24,18 +24,35 @@ export const recordPushNotificationToken = mutation({
       userId: args.name,
       pushToken: args.token,
     });
+    const status = await pushNotificationsClient.getStatusForUser(ctx, {
+      userId: args.name,
+    });
+    if (!status.hasToken) {
+      throw new ConvexError("Failed to record token");
+    }
   },
 });
 
 export const sendPushNotification = mutation({
   args: { title: v.string(), to: v.string() },
   handler: async (ctx, args) => {
-    await pushNotificationsClient.sendPushNotification(ctx, {
+    return pushNotificationsClient.sendPushNotification(ctx, {
       userId: args.to,
       notification: {
         title: args.title,
       },
     });
+  },
+});
+
+export const getNotificationStatus = query({
+  args: { id: v.string() },
+  handler: async (ctx, args) => {
+    const notification = await pushNotificationsClient.getNotification(
+      ctx,
+      args
+    );
+    return notification?.state;
   },
 });
 
