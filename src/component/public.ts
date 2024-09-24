@@ -135,6 +135,7 @@ export const getNotificationsForUser = query({
     const notifications = await ctx.db
       .query("notifications")
       .withIndex("token", (q) => q.eq("token", token.token))
+      .order("desc")
       .take(args.limit ?? DEFAULT_LIMIT);
     return notifications.map(
       ({ _id, metadata, state, numPreviousFailures }) => ({
@@ -223,7 +224,7 @@ export const unpauseNotificationsForUser = mutation({
 });
 
 export const getStatusForUser = query({
-  args: { userId: v.id("users") },
+  args: { userId: v.string() },
   returns: v.object({ hasToken: v.boolean(), paused: v.boolean() }),
   handler: async (ctx, { userId }) => {
     const existingToken = await ctx.db

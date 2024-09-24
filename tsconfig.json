@@ -4,10 +4,7 @@
     "checkJs": true,
     "strict": true,
     "target": "ESNext",
-    "lib": [
-      "ES2021",
-      "dom"
-    ],
+    "lib": ["ES2021", "dom"],
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "module": "NodeNext",
@@ -16,12 +13,9 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "noEmit": false,
     "outDir": "./dist",
     "skipLibCheck": true
   },
-  "include": [
-    "./src/**/*"
-  ],
+  "include": ["./src/**/*"],
   "extends": "expo/tsconfig.base"
 }

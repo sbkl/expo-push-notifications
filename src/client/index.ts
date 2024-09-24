@@ -17,20 +17,20 @@ import { GenericId } from "convex/values";
  * notifications in your app (e.g. `Id<"users">` or a branded string
  * `type Email = string & { __isEmail: true }`).
  */
-export class PushNotificationsClient<UserType extends string = string> {
+export class PushNotifications<UserType extends string = GenericId<"users">> {
   private config: {
     logLevel: LogLevel;
   };
   constructor(
     public component: UseApi<typeof api>,
-    config: {
+    config?: {
       logLevel?: LogLevel;
     }
   ) {
     this.component = component;
     this.config = {
-      ...config,
-      logLevel: config.logLevel ?? "ERROR",
+      ...(config ?? {}),
+      logLevel: config?.logLevel ?? "ERROR",
     };
   }
 
@@ -111,7 +111,7 @@ export class PushNotificationsClient<UserType extends string = string> {
   }
 
   /**
-   * Gets all notifications for a user.
+   * Gets the most recent notifications for a user, up to `limit` (default 1000)
    */
   getNotificationsForUser(
     ctx: RunQueryCtx,

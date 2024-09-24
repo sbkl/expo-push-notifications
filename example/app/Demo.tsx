@@ -1,5 +1,5 @@
 import { Button, Text, Input, View } from "tamagui";
-import { Dimensions } from "react-native";
+import { Dimensions, Keyboard } from "react-native";
 import { useConvex, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
@@ -9,7 +9,7 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 
-// begin setup from https://docs.expo.dev/push-notifications/push-notifications-setup/
+// ------- begin setup from https://docs.expo.dev/push-notifications/push-notifications-setup/
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -68,7 +68,7 @@ async function registerForPushNotificationsAsync() {
     handleRegistrationError("Must use physical device for push notifications");
   }
 }
-// end setup from https://docs.expo.dev/push-notifications/push-notifications-setup/
+// ------- end setup from https://docs.expo.dev/push-notifications/push-notifications-setup/
 
 const FRUIT_EMOJIS = ["🍎", "🍊", "🍇", "🥝", "🍉"];
 
@@ -81,7 +81,7 @@ export function Demo() {
     api.example.getNotificationStatus,
     notifId ? { id: notifId } : "skip"
   );
-  const allNames = useQuery(api.example.getNames) ?? [];
+  const allUsers = useQuery(api.example.getUsers) ?? [];
 
   return (
     <View
@@ -111,17 +111,26 @@ export function Demo() {
         />
         <Button
           onPress={async () => {
+            Keyboard.dismiss();
             const token = await registerForPushNotificationsAsync().catch(
-              (error: any) => {
+              (error: unknown) => {
                 alert(`Error registering for push notifications: ${error}`);
                 return undefined;
               }
             );
             if (token !== undefined) {
-              await convex.mutation(api.example.recordPushNotificationToken, {
-                name,
-                token,
-              });
+              await convex
+                .mutation(api.example.recordPushNotificationToken, {
+                  name,
+                  token,
+                })
+                .then(() => {
+                  alert("Successfully set up push notifications!");
+                })
+                .catch((error: unknown) => {
+                  alert(`Error registering for push notifications: ${error}`);
+                  return undefined;
+                });
             }
           }}
         >
@@ -130,16 +139,19 @@ export function Demo() {
       </View>
       <View flexDirection="column" alignItems="center" gap={8}>
         <Text>Send a fruit notification!</Text>
-        {allNames.map((n) => (
-          <View key={n} flexDirection="row" alignItems="center" gap={8}>
-            <Text>{n}</Text>
+        {allUsers.map((u) => (
+          <View key={u._id} flexDirection="row" alignItems="center" gap={8}>
+            <Text>
+              {u.name}
+              {u.name === name ? "(You)" : ""}
+            </Text>
             {FRUIT_EMOJIS.map((emoji, idx) => (
               <Button
                 key={idx}
                 onPress={() => {
-                  convex
+                  void convex
                     .mutation(api.example.sendPushNotification, {
-                      to: n,
+                      to: u._id,
                       title: `${emoji} from ${name}`,
                     })
                     .then(setNotifId);
