@@ -62,11 +62,11 @@ export const coordinateSendingPushNotifications = internalMutation({
     // Get notifications
     const retryNotifications = await ctx.db
       .query("notifications")
-      .withIndex("State", (q) => q.eq("state", "needs_retry"))
+      .withIndex("state", (q) => q.eq("state", "needs_retry"))
       .take(MAX_NOTIFICATIONS_PER_SEND);
     const unsentNotifications = await ctx.db
       .query("notifications")
-      .withIndex("State", (q) => q.eq("state", "awaiting_delivery"))
+      .withIndex("state", (q) => q.eq("state", "awaiting_delivery"))
       .take(MAX_NOTIFICATIONS_PER_SEND - retryNotifications.length);
     ctx.logger.debug(
       `Found ${retryNotifications.length} retry notifications and ${unsentNotifications.length} unsent notifications`

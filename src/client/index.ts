@@ -17,20 +17,20 @@ import { GenericId } from "convex/values";
  * notifications in your app (e.g. `Id<"users">` or a branded string
  * `type Email = string & { __isEmail: true }`).
  */
-export class PushNotificationsClient<UserType extends string = string> {
+export class PushNotifications<UserType extends string = GenericId<"users">> {
   private config: {
     logLevel: LogLevel;
   };
   constructor(
     public component: UseApi<typeof api>,
-    config: {
+    config?: {
       logLevel?: LogLevel;
     }
   ) {
     this.component = component;
     this.config = {
-      ...config,
-      logLevel: config.logLevel ?? "ERROR",
+      ...(config ?? {}),
+      logLevel: config?.logLevel ?? "ERROR",
     };
   }
 
@@ -38,9 +38,6 @@ export class PushNotificationsClient<UserType extends string = string> {
    * Takes in an Expo Push Token fetched from the client (https://docs.expo.dev/versions/latest/sdk/notifications/#expopushtoken).
    *
    * This allows sending notifications for this user using this token.
-   * @param ctx
-   * @param args
-   * @returns null
    */
   recordToken(
     ctx: RunMutationCtx,
@@ -56,12 +53,19 @@ export class PushNotificationsClient<UserType extends string = string> {
    * This removes the push notification token for a user if it exists.
    *
    * Once this is run, notifications can no longer be sent to this user.
-   * @param ctx
-   * @param args
-   * @returns null
    */
   removeToken(ctx: RunMutationCtx, args: { userId: UserType }): Promise<null> {
     return ctx.runMutation(this.component.public.removePushNotificationToken, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
+   * Gets the status of a user: whether they have a token and whether notifications are paused.
+   */
+  getStatusForUser(ctx: RunQueryCtx, args: { userId: UserType }) {
+    return ctx.runQuery(this.component.public.getStatusForUser, {
       ...args,
       logLevel: this.config.logLevel,
     });
@@ -77,9 +81,9 @@ export class PushNotificationsClient<UserType extends string = string> {
    * token for a user.
    *
    * Notification delivery will be batched for efficient delivery.
-   * @param ctx
-   * @param args
-   * @returns null
+   * @returns The ID of the notification, to be used to query the status.
+   * Or null if the user has paused notifications.
+   * @throws ConvexError if the user has no token and allowUnregisteredTokens is false.
    */
   sendPushNotification(
     ctx: RunMutationCtx,
@@ -96,13 +100,44 @@ export class PushNotificationsClient<UserType extends string = string> {
   }
 
   /**
+   * Gets the notification by ID returned from {@link sendPushNotification}.
+   * Returns null if there is no record of a notification with that ID.
+   */
+  getNotification(ctx: RunQueryCtx, args: { id: string }) {
+    return ctx.runQuery(this.component.public.getNotification, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
+   * Gets the most recent notifications for a user, up to `limit` (default 1000)
+   */
+  getNotificationsForUser(
+    ctx: RunQueryCtx,
+    args: { userId: UserType; limit?: number }
+  ) {
+    return ctx.runQuery(this.component.public.getNotificationsForUser, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
+   * Deletes all notifications for a user.
+   */
+  deleteNotificationsForUser(ctx: RunMutationCtx, args: { userId: UserType }) {
+    return ctx.runMutation(this.component.public.deleteNotificationsForUser, {
+      ...args,
+      logLevel: this.config.logLevel,
+    });
+  }
+
+  /**
    * Temporarily pause notifications for a user, for instance when the user is
    * actively using the app, or able to see notifications elsewhere.
    *
    * Notifications sent while paused will be dropped and will not be retried.
-   * @param ctx
-   * @param args
-   * @returns
    */
   pauseNotificationsForUser(ctx: RunMutationCtx, args: { userId: UserType }) {
     return ctx.runMutation(this.component.public.pauseNotificationsForUser, {
@@ -134,7 +169,7 @@ export class PushNotificationsClient<UserType extends string = string> {
    * @returns
    */
   shutdown(ctx: RunMutationCtx) {
-    return ctx.runMutation(this.component.public.restart, {
+    return ctx.runMutation(this.component.public.shutdown, {
       logLevel: this.config.logLevel,
     });
   }

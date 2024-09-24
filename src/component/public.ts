@@ -1,8 +1,10 @@
 import { ConvexError, v } from "convex/values";
-import { mutation } from "./functions.js";
-import { notificationFields } from "./schema.js";
+import { mutation, query } from "./functions.js";
+import { notificationFields, notificationState } from "./schema.js";
 import { ensureCoordinator, shutdownGracefully } from "./helpers.js";
-import { Doc } from "./_generated/dataModel.js";
+import { api } from "./_generated/api.js";
+
+const DEFAULT_LIMIT = 1000;
 
 export const recordPushNotificationToken = mutation({
   args: {
@@ -52,8 +54,9 @@ export const sendPushNotification = mutation({
   args: {
     userId: v.string(),
     notification: v.object(notificationFields),
+    allowUnregisteredTokens: v.optional(v.boolean()),
   },
-  returns: v.null(),
+  returns: v.union(v.id("notifications"), v.null()),
   handler: async (ctx, args) => {
     const token = await ctx.db
       .query("pushTokens")
@@ -63,6 +66,9 @@ export const sendPushNotification = mutation({
       ctx.logger.error(
         `No push token found for user ${args.userId}, cannot send notification`
       );
+      if (args.allowUnregisteredTokens) {
+        return null;
+      }
       throw new ConvexError({
         code: "NoPushToken",
         message: "No push token found for user",
@@ -74,9 +80,9 @@ export const sendPushNotification = mutation({
       ctx.logger.info(
         `Notifications are paused for user ${args.userId}, skipping`
       );
-      return;
+      return null;
     }
-    await ctx.db.insert("notifications", {
+    const id = await ctx.db.insert("notifications", {
       token: token.token,
       metadata: args.notification,
       state: "awaiting_delivery",
@@ -84,6 +90,97 @@ export const sendPushNotification = mutation({
     });
     ctx.logger.debug(`Recording notification for user ${args.userId}`);
     await ensureCoordinator(ctx);
+    return id;
+  },
+});
+
+export const getNotification = query({
+  args: { id: v.id("notifications") },
+  returns: v.union(
+    v.null(),
+    v.object({
+      ...notificationFields,
+      state: notificationState,
+      numPreviousFailures: v.number(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const notification = await ctx.db.get(args.id);
+    if (!notification) {
+      return null;
+    }
+    const { metadata, numPreviousFailures, state } = notification;
+    return { ...metadata, numPreviousFailures, state };
+  },
+});
+
+export const getNotificationsForUser = query({
+  args: { userId: v.string(), limit: v.optional(v.number()) },
+  returns: v.array(
+    v.object({
+      ...notificationFields,
+      id: v.id("notifications"),
+      state: notificationState,
+      numPreviousFailures: v.number(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const token = await ctx.db
+      .query("pushTokens")
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
+      .unique();
+    if (token === null) {
+      return [];
+    }
+    const notifications = await ctx.db
+      .query("notifications")
+      .withIndex("token", (q) => q.eq("token", token.token))
+      .order("desc")
+      .take(args.limit ?? DEFAULT_LIMIT);
+    return notifications.map(
+      ({ _id, metadata, state, numPreviousFailures }) => ({
+        id: _id,
+        ...metadata,
+        state: state,
+        numPreviousFailures: numPreviousFailures,
+      })
+    );
+  },
+});
+
+export const deleteNotificationsForUser = mutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const token = await ctx.db
+      .query("pushTokens")
+      .withIndex("userId", (q) => q.eq("userId", args.userId))
+      .unique();
+    if (token === null) {
+      ctx.logger.info("No push token found for user, nothing to delete");
+      return;
+    }
+    const notifications = await ctx.db
+      .query("notifications")
+      .withIndex("token", (q) => q.eq("token", token.token))
+      .take(DEFAULT_LIMIT);
+    for (const notification of notifications) {
+      await ctx.db.delete(notification._id);
+    }
+    if (notifications.length > 0) {
+      ctx.logger.info(
+        `Deleted ${notifications.length} notifications for user ${args.userId}`
+      );
+    }
+    if (notifications.length === DEFAULT_LIMIT) {
+      ctx.logger.info(
+        `Reached limit of ${DEFAULT_LIMIT} notifications for user ${args.userId},` +
+          ` scheduling another deletion`
+      );
+      await ctx.scheduler.runAfter(0, api.public.deleteNotificationsForUser, {
+        ...args,
+        logLevel: ctx.logger.level,
+      });
+    }
   },
 });
 
@@ -123,6 +220,27 @@ export const unpauseNotificationsForUser = mutation({
     await ctx.db.patch(existingToken._id, {
       notificationsPaused: false,
     });
+  },
+});
+
+export const getStatusForUser = query({
+  args: { userId: v.string() },
+  returns: v.object({ hasToken: v.boolean(), paused: v.boolean() }),
+  handler: async (ctx, { userId }) => {
+    const existingToken = await ctx.db
+      .query("pushTokens")
+      .withIndex("userId", (q) => q.eq("userId", userId))
+      .unique();
+    if (existingToken === null) {
+      ctx.logger.debug(
+        `No push token found for user ${userId}, returning false`
+      );
+      return { hasToken: false, paused: false };
+    }
+    return {
+      hasToken: true,
+      paused: existingToken.notificationsPaused ?? false,
+    };
   },
 });
 

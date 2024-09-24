@@ -11,7 +11,7 @@
     "lint": "tsc -p convex && eslint convex"
   },
   "dependencies": {
-    "@convex-dev/counter": "file:..",
+    "@convex-dev/expo-push-notifications": "file:..",
     "@tamagui/config": "^1.110.3",
     "convex": "1.16.0-alpha.2",
     "expo": "^51.0.32",

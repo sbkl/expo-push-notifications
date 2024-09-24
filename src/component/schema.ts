@@ -1,6 +1,5 @@
 import { defineSchema, defineTable } from "convex/server";
 import { Infer, v } from "convex/values";
-import { logLevelValidator } from "../logging/index.js";
 
 export const notificationFields = {
   title: v.string(),
@@ -28,8 +27,8 @@ export default defineSchema({
     state: notificationState,
     numPreviousFailures: v.number(),
   })
-    .index("TokenAndState", ["token", "state"])
-    .index("State", ["state"]),
+    .index("token", ["token"])
+    .index("state", ["state"]),
   pushTokens: defineTable({
     userId: v.string(),
     token: v.string(),
