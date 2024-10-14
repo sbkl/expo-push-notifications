@@ -1,6 +1,6 @@
 # Convex Push Notifications Component
 
-[![npm version](https://badge.fury.io/js/@convex-dev%expo-push-notifications.svg)](https://badge.fury.io/js/@convex-dev%2Fexpo-push-notifications)
+[![npm version](https://badge.fury.io/js/@convex-dev%2Fexpo-push-notifications.svg)](https://badge.fury.io/js/@convex-dev%2Fexpo-push-notifications)
 
 This is a Convex component that integrates with [Expo's push notification API](https://docs.expo.dev/push-notifications/overview/)
 to allow sending mobile push notifications to users of your app. It will batch calls to Expo's API and handle retrying delivery.
