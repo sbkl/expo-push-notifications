@@ -16,8 +16,13 @@ export const notificationState = v.union(
   v.literal("in_progress"),
   v.literal("delivered"),
   v.literal("needs_retry"),
+  // Expo returned a failure for this notification
+  v.literal("failed"),
+  // Failure before receiving confirmation of delivery, so not safe to retry
+  // without delivering twice
   v.literal("maybe_delivered"),
-  v.literal("failed")
+  // Exhausted retries to deliver
+  v.literal("unable_to_deliver")
 );
 
 export default defineSchema({

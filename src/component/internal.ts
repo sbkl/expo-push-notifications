@@ -54,6 +54,7 @@ export const markNotificationState = internalMutation({
 const MAX_NOTIFICATIONS_PER_SEND = 100;
 const MAX_SENDERS = 10;
 const MAX_SENDER_DURATION_MS = 10_000;
+const MAX_RETRY_ATTEMPTS = 5;
 
 export const coordinateSendingPushNotifications = internalMutation({
   args: {},
@@ -71,8 +72,11 @@ export const coordinateSendingPushNotifications = internalMutation({
     ctx.logger.debug(
       `Found ${retryNotifications.length} retry notifications and ${unsentNotifications.length} unsent notifications`
     );
-    const notificationsToSend = [...retryNotifications, ...unsentNotifications];
-    if (notificationsToSend.length === 0) {
+    const notificationsToProcess = [
+      ...retryNotifications,
+      ...unsentNotifications,
+    ];
+    if (notificationsToProcess.length === 0) {
       // Nothing to do!
       ctx.logger.info("No notifications to send, doing nothing");
       return;
@@ -103,7 +107,20 @@ export const coordinateSendingPushNotifications = internalMutation({
       );
       return;
     }
+    const notificationsToSend = notificationsToProcess.filter(
+      (n) => n.numPreviousFailures < MAX_RETRY_ATTEMPTS
+    );
+    const notificationsToMarkAsUnableToDeliver = notificationsToProcess.filter(
+      (n) => n.numPreviousFailures >= MAX_RETRY_ATTEMPTS
+    );
 
+    for (const notification of notificationsToMarkAsUnableToDeliver) {
+      if (notification.numPreviousFailures >= MAX_RETRY_ATTEMPTS) {
+        await ctx.db.patch(notification._id, {
+          state: "unable_to_deliver",
+        });
+      }
+    }
     for (const notification of notificationsToSend) {
       await ctx.db.patch(notification._id, {
         state: "in_progress",

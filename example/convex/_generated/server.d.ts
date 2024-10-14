@@ -173,8 +173,9 @@ export declare const components: {
             | "in_progress"
             | "delivered"
             | "needs_retry"
+            | "failed"
             | "maybe_delivered"
-            | "failed";
+            | "unable_to_deliver";
           title: string;
         }
       >;
@@ -197,8 +198,9 @@ export declare const components: {
             | "in_progress"
             | "delivered"
             | "needs_retry"
+            | "failed"
             | "maybe_delivered"
-            | "failed";
+            | "unable_to_deliver";
           title: string;
         }>
       >;

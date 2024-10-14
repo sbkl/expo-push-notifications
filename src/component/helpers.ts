@@ -37,7 +37,7 @@ export async function ensureCoordinator(ctx: MutationCtx) {
     return;
   }
   const coordinatorJobId = await ctx.scheduler.runAfter(
-    500,
+    250,
     internal.internal.coordinateSendingPushNotifications,
     {
       logLevel: ctx.logger.level,

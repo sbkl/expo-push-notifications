@@ -56,8 +56,9 @@ export type Mounts = {
           | "in_progress"
           | "delivered"
           | "needs_retry"
+          | "failed"
           | "maybe_delivered"
-          | "failed";
+          | "unable_to_deliver";
         title: string;
       }
     >;
@@ -80,8 +81,9 @@ export type Mounts = {
           | "in_progress"
           | "delivered"
           | "needs_retry"
+          | "failed"
           | "maybe_delivered"
-          | "failed";
+          | "unable_to_deliver";
         title: string;
       }>
     >;
