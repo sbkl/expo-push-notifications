@@ -49,9 +49,11 @@
       }
     }
   },
+  "peerDependencies": {
+    "convex": "~1.16.5 || ~1.17.0"
+  },
   "dependencies": {
     "@types/react": "~18.2.79",
-    "convex": "1.16.0-alpha.2",
     "convex-helpers": "^0.1.58",
     "expo": "^51.0.32",
     "expo-constants": "^16.0.2",
