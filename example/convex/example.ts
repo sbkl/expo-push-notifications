@@ -1,6 +1,7 @@
-import { components, mutation, query } from "./_generated/server.js";
+import { mutation, query } from "./_generated/server.js";
 import { PushNotifications } from "@convex-dev/expo-push-notifications";
 import { ConvexError, v } from "convex/values";
+import { components } from "./_generated/api.js";
 
 const pushNotifications = new PushNotifications(components.pushNotifications);
 

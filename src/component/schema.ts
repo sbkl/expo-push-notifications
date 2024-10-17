@@ -1,5 +1,5 @@
 import { defineSchema, defineTable } from "convex/server";
-import { Infer, v } from "convex/values";
+import { ObjectType, v } from "convex/values";
 
 export const notificationFields = {
   title: v.string(),
@@ -8,8 +8,7 @@ export const notificationFields = {
   data: v.optional(v.any()),
 };
 
-const _notificationFieldsObj = v.object(notificationFields);
-export type NotificationFields = Infer<typeof _notificationFieldsObj>;
+export type NotificationFields = ObjectType<typeof notificationFields>;
 
 export const notificationState = v.union(
   v.literal("awaiting_delivery"),
