@@ -72,7 +72,7 @@ Create a `convex.config.ts` file in your app's `convex/` folder and install the 
 ```ts
 // convex/convex.config.ts
 import { defineApp } from "convex/server";
-import pushNotifications from "@convex-dev/expo-push-notifications/component/convex.config";
+import pushNotifications from "@convex-dev/expo-push-notifications/convex.config";
 
 const app = defineApp();
 app.use(pushNotifications);
