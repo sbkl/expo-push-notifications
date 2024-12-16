@@ -2,8 +2,6 @@
 
 [![npm version](https://badge.fury.io/js/@convex-dev%2Fexpo-push-notifications.svg)](https://badge.fury.io/js/@convex-dev%2Fexpo-push-notifications)
 
-**Note: Convex Components are currently in beta.**
-
 <!-- START: Include on https://convex.dev/components -->
 
 This is a Convex component that integrates with [Expo's push notification API](https://docs.expo.dev/push-notifications/overview/)
