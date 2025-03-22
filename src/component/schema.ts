@@ -7,9 +7,17 @@ export const notificationFields = {
   body: v.optional(v.string()),
   sound: v.optional(v.string()),
   data: v.optional(v.any()),
-  badge: v.optional(v.number())
+  badge: v.optional(v.number()),
+  channelId: v.optional(v.string()),
+  categoryId: v.optional(v.string()),
+  ttl: v.optional(v.number),
+  expiration: v.optional(v.number),
+  priority: v.optional(v.union(v.literal("default"), v.literal("normal"), v.literal("high"))),
+  mutableContent: v.optional(v.boolean()),
+  interruptionLevel: v.optional(v.union(v.literal("active"), v.literal("critical"), v.literal("passive"), v.literal("time-sensitive"))),
+  _contentAvailable: v.optional(v.boolean()),
 };
-
+        
 export type NotificationFields = ObjectType<typeof notificationFields>;
 
 export const notificationState = v.union(
