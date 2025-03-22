@@ -216,6 +216,7 @@ export const action_sendPushNotifications = internalAction({
           categoryId: v.optional(v.string()),
           mutableContent: v.optional(v.boolean()),
           interruptionLevel: v.optional(v.union(v.literal("active"), v.literal("critical"), v.literal("passive"), v.literal("time-sensitive"))),
+          _contentAvailable: v.optional(v.boolean()),
         }),
         _id: v.id("notifications"),
       })
